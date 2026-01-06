@@ -67,7 +67,12 @@ export async function contentfulToDataset(
     for (const locale of localesToImport) {
       // We only want to import published entries if we're importing from the Content Delivery API (aka exports.published)
       if (isChanged(entry) || isDraft(entry) || isArchived(entry)) {
-        const id = isArchived(entry) ? entry.sys.id : `drafts.${entry.sys.id}`
+        let id = isArchived(entry) ? entry.sys.id : `drafts.${entry.sys.id}`
+        // Add locale to ID when using multiple locales to avoid duplicate IDs
+        if (useMultiLocale && locale !== defaultLocale.code) {
+          const draftPrefix = isArchived(entry) ? '' : 'drafts.'
+          id = `${draftPrefix}${entry.sys.id}__i18n_${locale}`
+        }
         const sanityObject = contentfulEntryToSanityObject(id, entry, locale, data, {
           useMultiLocale,
           idStructure: opts.intlIdStructure,
@@ -86,7 +91,11 @@ export async function contentfulToDataset(
 
   for (const entry of exports.published?.entries ?? []) {
     for (const locale of localesToImport) {
-      const id = entry.sys.id
+      let id = entry.sys.id
+      // Add locale to ID when using multiple locales to avoid duplicate IDs
+      if (useMultiLocale && locale !== defaultLocale.code) {
+        id = `${entry.sys.id}__i18n_${locale}`
+      }
       importableEntries.add(
         contentfulEntryToSanityObject(id, entry, locale, data, {
           useMultiLocale,

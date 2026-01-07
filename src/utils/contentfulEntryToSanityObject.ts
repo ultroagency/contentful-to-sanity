@@ -61,7 +61,11 @@ export function contentfulEntryToSanityObject(
     const control = findEditorControlForField(key, entry.sys.contentType.sys.id, data)
     const widgetId = control?.widgetId
 
-    const value = values[locale]
+    // Use the default locale value if the translated locale value is empty/null/undefined
+    let value = values[locale]
+    if (!value && locale !== options.defaultLocale) {
+      value = values[options.defaultLocale]
+    }
     const canCopyValueAsIs =
       typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
     if (canCopyValueAsIs) {

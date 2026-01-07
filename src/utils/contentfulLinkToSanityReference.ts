@@ -5,6 +5,7 @@ import {isDraft} from './contentfulEntry'
 import type {SysLink} from './objectIsContentfulLink'
 
 type Options = {
+  defaultLocale?: string
   weakRefs?: boolean
 }
 
@@ -25,15 +26,18 @@ export function contentfulLinkToSanityReference(
   locale: string,
   data: ContentfulExport,
   options: Options = {},
-): ReferenceOrAsset | null {
+): ReferenceOrAsset | undefined {
   if (link.sys.linkType === 'Asset') {
     const asset = data.assets?.find((item) => item.sys.id === link.sys.id)
     if (asset) {
-      const file = asset.fields.file?.[locale]
+      let file = asset.fields.file?.[locale]
+      if (!file && options.defaultLocale) {
+        file = asset.fields.file?.[options.defaultLocale]
+      }
       if (!file) {
         // eslint-disable-next-line no-console
         console.warn(`Missing file in asset [${asset.sys.id}]`)
-        return null
+        return undefined
       }
 
       const type = file.contentType.startsWith('image/') ? 'image' : 'file'
@@ -41,7 +45,7 @@ export function contentfulLinkToSanityReference(
       if (!file.url) {
         // eslint-disable-next-line no-console
         console.warn(`Missing asset url [${asset.sys.id}]`)
-        return null
+        return undefined
       }
 
       return {
@@ -52,7 +56,7 @@ export function contentfulLinkToSanityReference(
 
     // eslint-disable-next-line no-console
     console.warn(`Missing asset with ID [${link.sys.id}]`)
-    return null
+    return undefined
   }
 
   const linkedEntry = data.entries && data.entries.find((item) => item.sys.id === link.sys.id)
@@ -60,7 +64,7 @@ export function contentfulLinkToSanityReference(
   if (!linkedEntry) {
     // eslint-disable-next-line no-console
     console.warn(`Missing entry with ID [${link.sys.id}]`)
-    return null
+    return undefined
   }
 
   if (isDraft(linkedEntry)) {
@@ -82,7 +86,7 @@ export function contentfulLinkToSanityReference(
     }
     // eslint-disable-next-line no-console
     console.warn(`Link to draft entry with ID [${link.sys.id}]`)
-    return null
+    return undefined
   }
 
   return {

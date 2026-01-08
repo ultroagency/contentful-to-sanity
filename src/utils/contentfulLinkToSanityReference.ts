@@ -14,6 +14,9 @@ type ReferenceOrAsset =
   | {
       _type: 'file' | 'image'
       _sanityAsset: string
+      // Metadata from Contentful
+      title?: string
+      description?: string
     }
 
 export function prefixUrl(url: string) {
@@ -48,9 +51,21 @@ export function contentfulLinkToSanityReference(
         return undefined
       }
 
+      // Retrieve title and description with locale fallback
+      let title = asset.fields.title?.[locale]
+      if (!title && options.defaultLocale) {
+        title = asset.fields.title?.[options.defaultLocale]
+      }
+      let description = asset.fields.description?.[locale]
+      if (!description && options.defaultLocale) {
+        description = asset.fields.description?.[options.defaultLocale]
+      }
+
       return {
         _type: type,
         _sanityAsset: `${type}@${prefixUrl(file.url)}`,
+        ...(title ? {title} : {}),
+        ...(description ? {description} : {}),
       }
     }
 
